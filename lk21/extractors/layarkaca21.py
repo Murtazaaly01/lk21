@@ -101,7 +101,7 @@ class Layarkaca21(BaseExtractor):
                 r"\w/([^/]+)", a["href"]).group(1)
             result = {
                 "title": (item.find("h2").text or a.img["alt"]).strip(),
-            }
-            result.update(extra)
+            } | extra
+
             r.append(result)
         return r

@@ -74,7 +74,7 @@ class BaseExtractor:
         undocumented
         """
 
-        prefix = self.re.compile(r"^(?:re\:|{})".format(self.host))
+        prefix = self.re.compile(f"^(?:re\:|{self.host})")
         if not self.run_as_module:
             return d
         list_ = []
@@ -91,7 +91,7 @@ class BaseExtractor:
                         data = list(data.values())[0]
                     v = self.dict_to_list(data)
                 else:
-                    v = self.host + "/" + id
+                    v = f"{self.host}/{id}"
             list_.append({
                 "key": k.strip(),
                 "value": v
@@ -123,11 +123,11 @@ class BaseExtractor:
         undocumented
         """
 
-        filtered = []
-        for item in items:
-            if all(item.get(k) not in [None, ""] for k in keys):
-                filtered.append(item)
-        return filtered
+        return [
+            item
+            for item in items
+            if all(item.get(k) not in [None, ""] for k in keys)
+        ]
 
     def extract(self, id: any) -> dict:
         """
@@ -140,22 +140,17 @@ class BaseExtractor:
                 raise BaseExtractorError("You must provide a `id` value")
             id = id["id"]
 
-        result = {}
         meta = self.extract_meta(id)
-        result["metadata"] = meta.store if isinstance(
-            meta, self.MetaSet) else meta
-        result["download"] = self.dict_to_list(
-            self.extract_data(id))
-
-        result.update({
+        return {
+            "metadata": meta.store if isinstance(meta, self.MetaSet) else meta,
+            "download": self.dict_to_list(self.extract_data(id)),
+        } | {
             "extractor": self.__class__.__name__,
             "tag": self.tag,
             "url": f"{self.host}/{id}",
             "host": self.host,
             "id": id,
-        })
-
-        return result
+        }
 
     def soup(self, raw: str) -> bs4.BeautifulSoup:
         """
@@ -194,13 +189,9 @@ class BaseExtractor:
 
         if not isinstance(raw, str) or re.match(r"^\d+\.", raw):
             return raw
-        else:
-            self.counter += 1
-            raw = re.sub(r"^\s+|\s+$", "", raw)
-            if add_counter:
-                return f"{self.counter}. {raw}"
-            else:
-                return raw
+        self.counter += 1
+        raw = re.sub(r"^\s+|\s+$", "", raw)
+        return f"{self.counter}. {raw}" if add_counter else raw
 
     def info(self, *args, **kwargs):
         """
@@ -219,7 +210,7 @@ class BaseExtractor:
             if reset_counter:
                 self.counter = 0
             choices = list(choices)
-            if len(choices) == 0:
+            if not choices:
                 sys.exit("Pilihan kosong")
 
             if len(choices) == 1:

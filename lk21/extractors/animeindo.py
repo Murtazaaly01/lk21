@@ -47,10 +47,11 @@ class Animeindo(BaseExtractor):
         soup = self.soup(raw)
 
         if (eps := soup.findAll(class_="episode_list")):
-            d = {}
-            for ep in eps:
-                d[ep.a.text.split(" -")[0]] = "re:" + \
-                    self.getPath(ep.a["href"])
+            d = {
+                ep.a.text.split(" -")[0]: "re:" + self.getPath(ep.a["href"])
+                for ep in eps
+            }
+
             return d
 
         formats = self.re.findall(r"(Format .+?):", str(soup))
